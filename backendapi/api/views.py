@@ -1,21 +1,21 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Task
 from .serializers import TaskSerializer
+from rest_framework.views import APIView
+from django.http import Http404
 
 
-@api_view(['GET', 'POST'])
-def task_list(request):
+class TaskList(APIView):
     """
-    List all the tasks, or create a new task.
+    List all tasks, or create a new task.
     """
-    if request.method == 'GET':
+    def get(self, request, format=None):
         tasks = Task.objects.all()
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
-    elif request.method == 'POST':
+    def post(self, request, format=None):
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -23,27 +23,30 @@ def task_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def task_detail(request, pk):
+class TaskDetail(APIView):
     """
-    Retrieve, update or delete a task.
+    Retrieve, update or delete a task instance.
     """
-    try:
-        task = Task.objects.get(pk=pk)
-    except Task.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    def get_object(self, pk):
+        try:
+            return Task.objects.get(pk=pk)
+        except Task.DoesNotExist:
+            raise Http404
 
-    if request.method == 'GET':
+    def get(self, request, pk, format=None):
+        task = self.get_object(pk)
         serializer = TaskSerializer(task)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+    def put(self, request, pk, format=None):
+        task = self.get_object(pk)
         serializer = TaskSerializer(task, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, pk, format=None):
+        task = self.get_object(pk)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
