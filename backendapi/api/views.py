@@ -1,10 +1,10 @@
-from rest_framework import status
-from rest_framework.response import Response
 from .models import Task
 from .serializers import TaskSerializer
-from rest_framework.views import APIView
-from django.http import Http404
 from rest_framework import generics
+from django.contrib.auth.models import User
+from .serializers import UserSerializer
+from rest_framework import permissions
+from .permissions import IsOwnerOrReadOnly
 
 
 class TaskList(generics.ListCreateAPIView):
@@ -13,6 +13,11 @@ class TaskList(generics.ListCreateAPIView):
     """
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     
 
 class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -21,3 +26,15 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
