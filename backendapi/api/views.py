@@ -14,10 +14,14 @@ class TaskList(generics.ListCreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        return Task.objects.filter(owner=user)
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     
 
 class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -27,7 +31,7 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
 
 class UserList(generics.ListAPIView):
